@@ -9,7 +9,7 @@ public class LevelSelect : MonoBehaviour
     void Start()
     {
         // TEST: buka sampai level 3
-        int unlockedLevel = 3;
+        int unlockedLevel = 2;
 
         Debug.Log("Unlocked Level = " + unlockedLevel);
 
