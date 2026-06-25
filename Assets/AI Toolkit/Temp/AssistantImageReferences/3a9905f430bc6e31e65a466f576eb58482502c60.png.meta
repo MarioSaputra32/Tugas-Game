@@ -1,16 +1,10 @@
 fileFormatVersion: 2
-guid: cd8a78181b70d1840aeaae2e2200b421
+guid: 89e78a8357de0e649b1ddc6727eae227
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2812618865954169938
-    second: GameboyHealthBar+_0
-  - first:
-      213: 5600942545085681970
-    second: GameboyHealthBar+_1
-  - first:
-      213: -42918582103070406
-    second: GameboyHealthBar+_2
+      213: 9010282047284905685
+    second: 3a9905f430bc6e31e65a466f576eb58482502c60_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -43,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -81,7 +75,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -106,67 +100,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: GameboyHealthBar+_0
+      name: 3a9905f430bc6e31e65a466f576eb58482502c60_0
       rect:
         serializedVersion: 2
-        x: 2
-        y: 14
-        width: 121
-        height: 47
+        x: 0
+        y: 0
+        width: 353
+        height: 233
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: eab5d361b0297f8d0800000000000000
-      internalID: -2812618865954169938
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: GameboyHealthBar+_1
-      rect:
-        serializedVersion: 2
-        x: 42
-        y: 3
-        width: 56
-        height: 10
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 2315437d19b8abd40800000000000000
-      internalID: 5600942545085681970
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: GameboyHealthBar+_2
-      rect:
-        serializedVersion: 2
-        x: 105
-        y: 3
-        width: 16
-        height: 10
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: a39ab77e6c5876ff0800000000000000
-      internalID: -42918582103070406
+      spriteID: 5d60f7298c3fa0d70800000000000000
+      internalID: 9010282047284905685
       vertices: []
       indices: 
       edges: []
@@ -175,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 98687a0efda821b4a86401fe692a6cd7
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -183,13 +133,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries:
-      - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
+      entries: []
     nameFileIdTable:
-      GameboyHealthBar+_0: -2812618865954169938
-      GameboyHealthBar+_1: 5600942545085681970
-      GameboyHealthBar+_2: -42918582103070406
+      3a9905f430bc6e31e65a466f576eb58482502c60_0: 9010282047284905685
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
