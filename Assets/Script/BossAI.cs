@@ -1,212 +1,187 @@
 using UnityEngine;
+using System.Collections;
 
 public class BossAI : MonoBehaviour, IDamageable
 {
-    [Header("Target")]
-    private Transform playerTransform;
+    private Transform player;
+    private Animator anim;
+    private Rigidbody2D rb;
+    private PlayerHealth playerHealth;
 
     [Header("Movement")]
     public float chaseSpeed = 3f;
-    public float chaseDistance = 10f;
-    public float attackRange = 2.5f;
+    public float chaseDistance = 12f;
+    public float attackRange = 3f;
 
-    [Header("Boss Stats")]
-    public int health = 200;
-    public int normalDamage = 20;
-    public int specialDamage = 50;
-    public float attackCooldown = 2f;
-
-    private Animator anim;
-    private Rigidbody2D rb;
-
-    private bool isDead = false;
-    private bool isFacingRight = false;
-    private bool isAttacking = false;
+    [Header("Combat")]
+    public int maxHealth = 200;
+    public int currentHealth;
+    public int damage = 20;
+    public float attackCooldown = 1.5f;
+    public float damageDelay = 0.5f;
 
     private float nextAttackTime;
 
-    // 3 Normal -> 1 Special
-    private int attackCount = 0;
+    private bool isFacingRight = false;
+    private bool isAgro = false;
+    private bool isDead = false;
+    private bool isAttacking = false;
 
     void Start()
     {
         anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
 
+        currentHealth = maxHealth;
+
         FindPlayer();
     }
 
     void Update()
     {
-        if (isDead)
-            return;
+        if (isDead) return;
 
-        if (playerTransform == null)
+        if (player == null)
         {
             FindPlayer();
             return;
         }
 
-        AnimatorStateInfo state = anim.GetCurrentAnimatorStateInfo(0);
+        float distance = Vector2.Distance(transform.position, player.position);
 
-        if (state.IsName("Attack") ||
-            state.IsName("SpecialAttack") ||
-            state.IsName("Death"))
+        if (distance <= chaseDistance)
+            isAgro = true;
+
+        if (isAttacking)
         {
             rb.linearVelocity = Vector2.zero;
             return;
         }
 
-        float distance = Vector2.Distance(transform.position, playerTransform.position);
-
-        if (distance <= chaseDistance)
-        {
+        if (isAgro)
             ChasePlayer(distance);
-        }
         else
-        {
             rb.linearVelocity = Vector2.zero;
-            anim.SetBool("Run", false);
-        }
+
+        FacePlayer();
     }
 
     void FindPlayer()
     {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        GameObject obj = GameObject.FindGameObjectWithTag("Player");
 
-        if (player != null)
+        if (obj != null)
         {
-            playerTransform = player.transform;
+            player = obj.transform;
+
+            playerHealth = obj.GetComponent<PlayerHealth>();
+            if (playerHealth == null)
+                playerHealth = obj.GetComponentInChildren<PlayerHealth>();
         }
     }
 
     void ChasePlayer(float distance)
     {
-        FacePlayer();
+        if (player == null) return;
 
+        if (distance > chaseDistance)
+        {
+            isAgro = false;
+            rb.linearVelocity = Vector2.zero;
+            return;
+        }
+
+        // ATTACK
         if (distance <= attackRange)
         {
             rb.linearVelocity = Vector2.zero;
-            anim.SetBool("Run", false);
 
-            if (!isAttacking && Time.time >= nextAttackTime)
+            if (Time.time >= nextAttackTime)
             {
-                Attack();
+                StartCoroutine(AttackRoutine());
+                nextAttackTime = Time.time + attackCooldown;
             }
         }
         else
         {
-            float dir = playerTransform.position.x > transform.position.x ? 1 : -1;
-
+            float dir = player.position.x > transform.position.x ? 1f : -1f;
             rb.linearVelocity = new Vector2(dir * chaseSpeed, rb.linearVelocity.y);
-
-            anim.SetBool("Run", true);
         }
     }
 
-    void Attack()
+    IEnumerator AttackRoutine()
     {
         isAttacking = true;
 
-        attackCount++;
+        rb.linearVelocity = Vector2.zero;
 
-        if (attackCount <= 3)
-        {
-            anim.SetTrigger("Attack");
-            Debug.Log("Normal Attack");
-        }
-        else
-        {
-            anim.SetTrigger("SpecialAttack");
-            Debug.Log("SPECIAL ATTACK");
+        anim.SetTrigger("AttackTrigger");
 
-            attackCount = 0;
-        }
+        yield return new WaitForSeconds(damageDelay);
 
-        nextAttackTime = Time.time + attackCooldown;
-    }
+        DealDamage();
 
-    // Animation Event
-    public void DealDamage()
-    {
-        if (playerTransform == null)
-            return;
+        yield return new WaitForSeconds(0.3f);
 
-        float distance = Vector2.Distance(transform.position, playerTransform.position);
-
-        if (distance > attackRange)
-            return;
-
-        IDamageable damageable = playerTransform.GetComponent<IDamageable>();
-
-        if (damageable == null)
-            return;
-
-        if (attackCount == 0)
-        {
-            damageable.TakeDamage(specialDamage);
-            Debug.Log("Special Damage : " + specialDamage);
-        }
-        else
-        {
-            damageable.TakeDamage(normalDamage);
-            Debug.Log("Normal Damage : " + normalDamage);
-        }
-    }
-
-    // Animation Event di frame terakhir Attack & SpecialAttack
-    public void EndAttack()
-    {
         isAttacking = false;
     }
 
-    public void TakeDamage(int damage)
+    void DealDamage()
     {
-        if (isDead)
-            return;
+        if (playerHealth == null || player == null) return;
 
-        health -= damage;
+        float distance = Vector2.Distance(transform.position, player.position);
 
-        Debug.Log("Boss HP : " + health);
-
-        if (health <= 0)
+        if (distance <= attackRange)
         {
-            health = 0;
+            Debug.Log("Boss hit player!");
+            playerHealth.TakeDamage(damage);
+        }
+    }
+
+    // =========================
+    // IDAMAGEABLE IMPLEMENTATION
+    // =========================
+    public void TakeDamage(int damageAmount)
+    {
+        if (isDead) return;
+
+        currentHealth -= damageAmount;
+
+        Debug.Log("Boss kena damage: " + damageAmount);
+        Debug.Log("HP Boss: " + currentHealth);
+
+        isAgro = true;
+
+        if (currentHealth <= 0)
+        {
             Die();
         }
     }
 
     void Die()
     {
-        if (isDead)
-            return;
+        if (isDead) return;
 
         isDead = true;
+        isAgro = false;
 
         rb.linearVelocity = Vector2.zero;
         rb.simulated = false;
 
-        anim.ResetTrigger("Attack");
-        anim.ResetTrigger("SpecialAttack");
-        anim.SetBool("Run", false);
-        anim.SetTrigger("Death");
+        anim.SetTrigger("DeathTrigger");
 
         Destroy(gameObject, 2f);
     }
 
     void FacePlayer()
     {
-        if (playerTransform == null)
-            return;
+        if (player == null) return;
 
-        if (playerTransform.position.x > transform.position.x && !isFacingRight)
-        {
+        if (player.position.x > transform.position.x && !isFacingRight)
             Flip();
-        }
-        else if (playerTransform.position.x < transform.position.x && isFacingRight)
-        {
+        else if (player.position.x < transform.position.x && isFacingRight)
             Flip();
-        }
     }
 
     void Flip()
@@ -216,14 +191,5 @@ public class BossAI : MonoBehaviour, IDamageable
         Vector3 scale = transform.localScale;
         scale.x *= -1;
         transform.localScale = scale;
-    }
-
-    void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, chaseDistance);
-
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
     }
 }
