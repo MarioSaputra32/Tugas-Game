@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.UI; // 1. WAJIB ADA: Agar Unity mengenali tipe data 'Image'
+using UnityEngine.UI; // WAJIB ADA: Agar Unity mengenali tipe data 'Slider'
 
 public class PlayerHealth : MonoBehaviour
 {
@@ -7,18 +7,46 @@ public class PlayerHealth : MonoBehaviour
     public float maxHealth = 100f;
     public float currentHealth;
 
-    [Header("Komponen UI")]
-    // 2. Kolom untuk memasukkan Image isi bar merah di Inspector
-    public Image healthFillImage; 
+    [Header("Komponen UI Slider")]
+    // Kolom untuk memasukkan UI Slider di Inspector
+    public Slider healthSlider; 
 
     void Start()
     {
         // Penuhi darah saat game baru dimulai
         currentHealth = maxHealth;
+
+        // Inisialisasi nilai batas maksimal slider sesuai dengan maxHealth
+        if (healthSlider != null)
+        {
+            healthSlider.maxValue = maxHealth;
+            healthSlider.minValue = 0f;
+        }
+
         UpdateHealthBar();
     }
 
-    // Fungsi untuk mengurangi darah (bisa dipanggil saat kena musuh)
+    void Update()
+    {
+        // =========================================================================
+        // TOMBOL TES DARURAT (Hapus atau beri komentar jika game sudah jadi)
+        // =========================================================================
+        // Tekan tombol K di Keyboard saat Play Mode untuk mengurangi darah sebesar 10
+        if (Input.GetKeyDown(KeyCode.K))
+        {
+            Debug.Log("Tombol K ditekan: Mengurangi darah sebesar 10");
+            TakeDamage(10f); 
+        }
+
+        // Tekan tombol H di Keyboard saat Play Mode untuk menambah/heal darah sebesar 10
+        if (Input.GetKeyDown(KeyCode.H))
+        {
+            Debug.Log("Tombol H ditekan: Menambah darah sebesar 10");
+            Heal(10f);
+        }
+    }
+
+    // Fungsi utama untuk mengurangi darah (dipanggil dari tombol tes atau script musuh)
     public void TakeDamage(float damageAmount)
     {
         currentHealth -= damageAmount;
@@ -40,20 +68,30 @@ public class PlayerHealth : MonoBehaviour
         UpdateHealthBar();
     }
 
-    // Fungsi utama untuk menggerakkan isi bar merah secara visual
+    // Fungsi untuk memperbarui visual isi Slider
     void UpdateHealthBar()
     {
-        if (healthFillImage != null)
+        if (healthSlider != null)
         {
-            // Mengubah nilai fillAmount (0.0 sampai 1.0) berdasarkan persentase darah
-            healthFillImage.fillAmount = currentHealth / maxHealth;
+            // Slider langsung diisi dengan nilai currentHealth
+            healthSlider.value = currentHealth;
+        }
+        else
+        {
+            Debug.LogWarning("Health Slider belum di-drag ke Inspector PlayerHealth!");
         }
     }
 
     void Die()
     {
         Debug.Log("Player telah mati!");
-        // Kamu bisa memanggil fungsi mati bawaan DarkKnightController di sini:
-        // GetComponent<TealFalconEnemySeries.DarkKnightController>().ActivateDeath();
+        
+        // Memanggil fungsi mati bawaan DarkKnightController agar animasi kematian aktif
+        var controller = GetComponent<TealFalconEnemySeries.DarkKnightController>();
+        if (controller != null)
+        {
+            controller.ActivateDeath();
+        }
     }
+    
 }

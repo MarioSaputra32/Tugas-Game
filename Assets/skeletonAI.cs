@@ -1,172 +1,251 @@
 using UnityEngine;
 
-public class SkeletonAI : MonoBehaviour
+public class SkeletonAI : MonoBehaviour, IDamageable
 {
     private Transform playerTransform;
     private Animator anim;
     private Rigidbody2D rb;
-    
-    [Header("Jangkauan & Kecepatan")]
-    public float chaseRange = 5f;        // Jarak musuh mulai mendeteksi & mengejar player
-    public float attackRange = 1.5f;     // Jarak minimal untuk menyerang player
-    public float moveSpeed = 2f;         // Kecepatan jalan Skeleton
-    
-    [Header("Jeda & Damage Serangan")]
-    public float attackCooldown = 2f;    // Jeda waktu antar tebasan (detik)
-    public int damageAmount = 10;        // Jumlah pengurangan darah player
-    private float nextAttackTime = 0f;
+
+    [Header("Movement")]
+    public float patrolSpeed = 2f;
+    public float chaseSpeed = 4f;
+    public float walkTime = 3f;
+
+    [Header("Combat")]
+    public int health = 30;
+    public int damageAmount = 7;
+    public float attackRange = 4f;
+    public float chaseDistance = 8f;
+    public float attackCooldown = 3f;
+
+    private float patrolTimer;
+    private float nextAttackTime;
+
+    private bool firstAttack = true;
+    private bool isFacingRight = false;
+    private bool isAgro = false;
+    private bool isDead = false;
 
     void Start()
     {
         anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
-        
-        // Mencari objek dengan tag "Player" secara otomatis
-        GameObject playerObj = GameObject.FindWithTag("Player");
-        if (playerObj != null)
-        {
-            playerTransform = playerObj.transform;
-        }
+
+        patrolTimer = walkTime;
+
+        if (anim != null)
+            anim.SetBool("isWalking", false);
+
+        FindPlayer();
     }
 
     void Update()
     {
-        if (playerTransform == null) return;
+        if (isDead)
+            return;
 
-        // Cek jika sedang memutar animasi menyerang, musuh harus fokus menyelesaikan ayunannya dan tidak bergeser/berjalan
-        if (IsAttacking())
+        if (playerTransform == null)
         {
-            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-            anim.SetBool("isWalking", false);
+            FindPlayer();
             return;
         }
 
-        // Hitung jarak antara Skeleton dan Player
-        float distanceToPlayer = Vector2.Distance(transform.position, playerTransform.position);
+        AnimatorStateInfo state = anim.GetCurrentAnimatorStateInfo(0);
 
-        if (distanceToPlayer <= attackRange)
+        if (state.IsName("Attack") || state.IsName("Death"))
         {
-            // 1. KONDISI MENYERANG: Berhenti jalan dan tebas player
-            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-            anim.SetBool("isWalking", false); // Matikan animasi jalan sesuai gambar image_d6e001.png
+            rb.linearVelocity = Vector2.zero;
+            return;
+        }
 
-            HadapPlayer(); // Pastikan selalu menghadap player saat bersiap dan menyerang
+        if (isAgro)
+            ChasePlayer();
+        else
+            Patrol();
+    }
 
-            if (Time.time >= nextAttackTime)
+    void FindPlayer()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+
+        if (player != null)
+            playerTransform = player.transform;
+    }
+
+    void Patrol()
+    {
+        patrolTimer -= Time.deltaTime;
+
+        float dir = isFacingRight ? 1f : -1f;
+
+        rb.linearVelocity = new Vector2(dir * patrolSpeed, rb.linearVelocity.y);
+
+        anim.SetBool("isWalking", true);
+
+        if (patrolTimer <= 0f)
+        {
+            Flip();
+            patrolTimer = walkTime;
+        }
+    }
+
+    void ChasePlayer()
+    {
+        if (playerTransform == null)
+            return;
+
+        float distance = Vector2.Distance(transform.position, playerTransform.position);
+
+        FacePlayer();
+
+        if (distance <= attackRange)
+        {
+            rb.linearVelocity = Vector2.zero;
+            anim.SetBool("isWalking", false);
+
+            if (firstAttack)
             {
-                LakukanSerangan();
-                nextAttackTime = Time.time + attackCooldown; // Setel ulang cooldown
+                Attack();
+                firstAttack = false;
+                nextAttackTime = Time.time + attackCooldown;
+            }
+            else if (Time.time >= nextAttackTime)
+            {
+                Attack();
+                nextAttackTime = Time.time + attackCooldown;
             }
         }
-        else if (distanceToPlayer <= chaseRange)
+        else if (distance <= chaseDistance)
         {
-            // 2. KONDISI MENGEJAR: Dekati posisi player
-            KejarPlayer();
+            float dir = playerTransform.position.x > transform.position.x ? 1f : -1f;
+
+            rb.linearVelocity = new Vector2(dir * chaseSpeed, rb.linearVelocity.y);
+
+            anim.SetBool("isWalking", true);
         }
         else
         {
-            // 3. KONDISI DIAM (IDLE): Player berada di luar area deteksi
-            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-            anim.SetBool("isWalking", false); 
+            rb.linearVelocity = Vector2.zero;
+            anim.SetBool("isWalking", false);
+
+            isAgro = false;
+            firstAttack = true;
+            patrolTimer = walkTime;
         }
     }
 
-    // Fungsi helper untuk membalik orientasi Skeleton agar menghadap player
-    void HadapPlayer()
+    void Attack()
     {
-        float arahX = playerTransform.position.x - transform.position.x;
-        if (arahX > 0)
-        {
-            transform.localScale = new Vector3(1, 1, 1); // Hadap kanan
-        }
-        else if (arahX < 0)
-        {
-            transform.localScale = new Vector3(-1, 1, 1); // Hadap kiri
-        }
+        if (isDead)
+            return;
+
+        Debug.Log("Skeleton menyerang");
+        anim.SetTrigger("AttackTrigger");
     }
 
-    // Mengecek apakah Skeleton sedang dalam status memutar animasi serangan
-    bool IsAttacking()
-    {
-        if (anim == null) return false;
-        AnimatorStateInfo stateInfo = anim.GetCurrentAnimatorStateInfo(0);
-        return stateInfo.IsName("Attack") || stateInfo.IsName("SpecialAttack");
-    }
-
-    void KejarPlayer()
-    {
-        // Cari tahu arah posisi player (kanan atau kiri)
-        float arahX = playerTransform.position.x - transform.position.x;
-        
-        if (arahX > 0)
-        {
-            rb.linearVelocity = new Vector2(moveSpeed, rb.linearVelocity.y);
-        }
-        else if (arahX < 0)
-        {
-            rb.linearVelocity = new Vector2(-moveSpeed, rb.linearVelocity.y);
-        }
-
-        HadapPlayer(); // Balik badan menghadap arah player
-
-        // Aktifkan kotak centang isWalking di Animator
-        anim.SetBool("isWalking", true); 
-    }
-
-    void LakukanSerangan()
-    {
-        // Mengacak jenis serangan agar variatif
-        int acakSerangan = Random.Range(0, 2);
-
-        if (acakSerangan == 0)
-        {
-            // Memicu AttackTrigger sesuai gambar image_d6e001.png
-            anim.SetTrigger("AttackTrigger"); 
-            Debug.Log("Skeleton memicu animasi menyerang biasa!");
-        }
-        else
-        {
-            // Memicu SpecialATrigger (menyesuaikan typo bawaan aset di gambar)
-            anim.SetTrigger("SpecialATrigger"); 
-            Debug.Log("Skeleton memicu animasi jurus spesial!");
-        }
-    }
-
-    // =========================================================================
-    // TAMBAHAN FUNGSI BARU DI SINI:
-    // Otomatis dipanggil oleh Animation Event bawaan aset saat pedang mengayun hit player
-    // =========================================================================
     public void OnAttackHitEvent()
     {
-        if (playerTransform == null) return;
+        if (isDead)
+            return;
 
-        // Cek kembali jarak saat pedang mengenai target untuk menghindari hit "hantu" ketika player menghindar
-        float jarakSekarang = Vector2.Distance(transform.position, playerTransform.position);
-        
-        if (jarakSekarang <= attackRange)
+        if (playerTransform == null)
+            return;
+
+        float distance = Vector2.Distance(transform.position, playerTransform.position);
+
+        if (distance <= attackRange)
         {
-            // Ambil komponen PlayerHealth yang terpasang pada objek Player
-            PlayerHealth playerHealth = playerTransform.GetComponent<PlayerHealth>();
+            PlayerHealth player = playerTransform.GetComponent<PlayerHealth>();
 
-            if (playerHealth != null)
+            if (player != null)
             {
-                playerHealth.TakeDamage(damageAmount); // Kurangi darah player
-                Debug.Log("OnAttackHitEvent: Tebasan Berhasil! Player terkena damage sebesar " + damageAmount);
-            }
-            else
-            {
-                Debug.LogWarning("OnAttackHitEvent: Objek Player ditemukan, tetapi komponen 'PlayerHealth' tidak ada!");
+                Debug.Log("Player terkena damage");
+                player.TakeDamage(damageAmount);
             }
         }
     }
 
-    // Menampilkan radius area deteksi dan serang di Scene View Unity
+    public void TakeDamage(int damage)
+    {
+        if (isDead)
+            return;
+
+        health -= damage;
+
+        Debug.Log("Skeleton terkena damage. HP : " + health);
+
+        if (health <= 0)
+        {
+            health = 0;
+            Die();
+            return;
+        }
+
+        isAgro = true;
+
+        if (playerTransform == null)
+            FindPlayer();
+
+        FacePlayer();
+
+        if (playerTransform != null)
+        {
+            float dir = playerTransform.position.x > transform.position.x ? 1f : -1f;
+
+            rb.linearVelocity = new Vector2(dir * chaseSpeed, rb.linearVelocity.y);
+
+            anim.SetBool("isWalking", true);
+        }
+    }
+        void Die()
+    {
+        if (isDead)
+            return;
+
+        isDead = true;
+        isAgro = false;
+        firstAttack = false;
+
+        rb.linearVelocity = Vector2.zero;
+        rb.simulated = false;
+
+        anim.ResetTrigger("AttackTrigger");
+        anim.SetBool("isWalking", false);
+        anim.SetTrigger("DeathTrigger");
+
+        Destroy(gameObject, 1.5f);
+    }
+
+    void FacePlayer()
+    {
+        if (playerTransform == null)
+            return;
+
+        if (playerTransform.position.x > transform.position.x && !isFacingRight)
+        {
+            Flip();
+        }
+        else if (playerTransform.position.x < transform.position.x && isFacingRight)
+        {
+            Flip();
+        }
+    }
+
+    void Flip()
+    {
+        isFacingRight = !isFacingRight;
+
+        Vector3 scale = transform.localScale;
+        scale.x *= -1;
+        transform.localScale = scale;
+    }
+
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, chaseRange); // Radius kejar (Kuning)
-
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange); // Radius serang (Merah)
+        Gizmos.DrawWireSphere(transform.position, attackRange);
+
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, chaseDistance);
     }
 }

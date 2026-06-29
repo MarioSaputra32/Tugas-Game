@@ -60,13 +60,13 @@
         "*.asset": "yaml",
         "*.meta": "yaml",
         "*.prefab": "yaml",
-        "*.unity": "yaml",
+        "*.unity": "yaml"
     },
     "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.patterns": {
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "My project (5).slnx",
+    "dotnet.defaultSolution": "Tugas-Game-2026-06-26-01-31-01.slnx",
     "dotnet.enableWorkspaceBasedDevelopment": false
 }
