@@ -65,27 +65,31 @@ public class PlayerInput : MonoBehaviour
         // ==========================================
         // 2. LOGIKA INPUT SERANG + DETEKSI HITBOX
         // ==========================================
-        if (Input.GetMouseButtonDown(0) && Time.time >= nextAttackTime)
-        {
+        if ((Input.GetMouseButtonDown(0) || MobileInput.Attack) && Time.time >= nextAttackTime)
+    {
+            MobileInput.Attack = false;
+
             darkKnightController.ActivateAttack();
             nextAttackTime = Time.time + attackCooldown;
 
-            // Panggil fungsi untuk memeriksa apakah ada musuh di depan saat menebas
             CheckAttackHitbox();
-        }
+    }
 
         // ==========================================
         // 3. LOGIKA INPUT LONCAT
         // ==========================================
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
-        {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
-        }
+      if ((Input.GetKeyDown(KeyCode.Space) || MobileInput.Jump) && isGrounded)
+    {
+        MobileInput.Jump = false;
+
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+    }
 
         // ==========================================
         // 4. LOGIKA INPUT GERAKAN & PENGUNCIAN DASH
         // ==========================================
-        float moveInput = Input.GetAxisRaw("Horizontal");
+        float keyboardInput = Input.GetAxisRaw("Horizontal");
+        float moveInput = keyboardInput != 0 ? keyboardInput : MobileInput.Horizontal;
         float targetSpeed = Input.GetKey(KeyCode.LeftShift) ? runSpeed : walkSpeed;
 
         bool isAttacking = darkKnightController.CurrentFightingState == DarkKnightController.FightingState.Attacking;
