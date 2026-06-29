@@ -68,8 +68,10 @@ AudioMixerController:
   m_EnableSuspend: 0
   m_UpdateMode: 0
   m_ExposedParameters:
+  - guid: 612813ca0b0bf724687d0a71cbc38d8e
+    name: MasterParam
   - guid: 775f7c23f3bd1ba4ca49fba576dfa8bd
-    name: Volume
+    name: VolumeParam
   - guid: 1392029f46cd2ea4b956dd0057c743e1
     name: MusikParam
   m_AudioMixerGroupViews:

@@ -9,57 +9,43 @@ public class SettingManager : MonoBehaviour
 
     [Header("UI Sliders")]
     public Slider sliderMaster; // Slider untuk SEMUA suara
-    public Slider sliderVolume; // Slider untuk Efek Suara (SFX)
     public Slider sliderMusik;  // Slider untuk Musik (BGM)
 
-    [Header("Nama Parameter Mixer (Harus Sama Persis)")]
-    private string masterParam = "MasterParam";
-    private string volumeParam = "VolumeParam"; 
+    // Nama Parameter Mixer (Disamakan persis dengan yang di-expose di Unity Mixer)
+    private string masterParam = "MasterParam"; 
     private string musikParam = "MusikParam";   
 
     void Start()
     {
-        // 1. Atur batas minimum dan maksimum semua Slider UI
+        // 1. Atur batas minimum dan maksimum semua Slider UI (0.0001f agar tidak log10(0) yang menghasilkan error)
         sliderMaster.minValue = 0.0001f;
         sliderMaster.maxValue = 1f;
-        sliderVolume.minValue = 0.0001f;
-        sliderVolume.maxValue = 1f;
         sliderMusik.minValue = 0.0001f;
         sliderMusik.maxValue = 1f;
 
         // 2. Ambil data volume yang tersimpan (Default: 0.75f jika belum ada data)
         float savedMaster = PlayerPrefs.GetFloat("SavedMaster", 0.75f);
-        float savedVolume = PlayerPrefs.GetFloat("SavedVolume", 0.75f);
         float savedMusik = PlayerPrefs.GetFloat("SavedMusik", 0.75f);
 
-        // 3. Terapkan nilai penyimpanan ke Slider UI
+        // 3. Terapkan nilai penyimpanan ke UI Slider
         sliderMaster.value = savedMaster;
-        sliderVolume.value = savedVolume;
         sliderMusik.value = savedMusik;
 
         // 4. Terapkan nilai ke Audio Mixer langsung saat game dimulai
         SetMaster(savedMaster);
-        SetVolume(savedVolume);
         SetMusik(savedMusik);
 
-        // 5. Menghubungkan semua Slider ke Fungsi via Code secara otomatis
+        // 5. Menghubungkan semua Slider ke Fungsi secara otomatis melalui kode
         sliderMaster.onValueChanged.AddListener(SetMaster);
-        sliderVolume.onValueChanged.AddListener(SetVolume);
         sliderMusik.onValueChanged.AddListener(SetMusik);
     }
 
-    // Fungsi untuk mengatur ALL/MASTER Volume (Semua suara)
+    // Fungsi untuk mengatur Master Volume (Semua suara)
     public void SetMaster(float value)
     {
         audioMixer.SetFloat(masterParam, Mathf.Log10(value) * 20);
         PlayerPrefs.SetFloat("SavedMaster", value);
-    }
-
-    // Fungsi untuk mengatur volume SFX / Efek Suara Umum
-    public void SetVolume(float value)
-    {
-        audioMixer.SetFloat(volumeParam, Mathf.Log10(value) * 20);
-        PlayerPrefs.SetFloat("SavedVolume", value);
+        PlayerPrefs.Save(); // Langsung simpan perubahan posisi slider
     }
 
     // Fungsi untuk mengatur volume Musik Latar (BGM)
@@ -67,11 +53,6 @@ public class SettingManager : MonoBehaviour
     {
         audioMixer.SetFloat(musikParam, Mathf.Log10(value) * 20);
         PlayerPrefs.SetFloat("SavedMusik", value);
-    }
-
-    // Dipanggil otomatis oleh Unity saat game keluar/ganti scene agar data tersimpan aman
-    void OnDisable()
-    {
-        PlayerPrefs.Save();
+        PlayerPrefs.Save(); // Langsung simpan perubahan posisi slider
     }
 }

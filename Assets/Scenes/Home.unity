@@ -314,7 +314,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93947b905be36ed40acf079e08628cc8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PopupSetting
-  semuaTombolLuar: {fileID: 0}
+  semuaTombolLuar: {fileID: 422796120}
+  panelSelectLevel: {fileID: 0}
 --- !u!1 &171556404
 GameObject:
   m_ObjectHideFlags: 0
@@ -1740,6 +1741,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 1335215069}
   - {fileID: 1436088548}
+  sceneNamePrefix: Level
 --- !u!1 &717429274
 GameObject:
   m_ObjectHideFlags: 0
@@ -4161,6 +4163,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GlobalPopupManager
   semuaTombolLuar: {fileID: 422796120}
+  panelSelectLevel: {fileID: 0}
 --- !u!114 &1712678361
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4175,7 +4178,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SettingManager
   audioMixer: {fileID: 24100000, guid: 084166f8fd29058418642dd056c9b25c, type: 2}
   sliderMaster: {fileID: 2042062814}
-  sliderVolume: {fileID: 0}
   sliderMusik: {fileID: 1217259965}
 --- !u!1 &1787446648
 GameObject:

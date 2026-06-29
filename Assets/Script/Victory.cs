@@ -4,6 +4,9 @@ using UnityEngine.SceneManagement;
 public class Victory : MonoBehaviour
 {
     public GameObject victoryPanel;
+    
+    // Tentukan level saat ini di Inspector Unity (misal: Level 1 tulis 1, Level 2 tulis 2)
+    public int currentLevel; 
 
     private void Start()
     {
@@ -15,6 +18,23 @@ public class Victory : MonoBehaviour
     {
         victoryPanel.SetActive(true);
         Time.timeScale = 0f;
+
+        // PANGGIL FUNGSI SAVE SAAT MENANG
+        SaveProgress();
+    }
+
+    private void SaveProgress()
+    {
+        int nextLevel = currentLevel + 1;
+        int highestUnlocked = PlayerPrefs.GetInt("UnlockedLevel", 1);
+
+        // Hanya update jika level berikutnya lebih tinggi dari yang sudah pernah terbuka
+        if (nextLevel > highestUnlocked)
+        {
+            PlayerPrefs.SetInt("UnlockedLevel", nextLevel);
+            PlayerPrefs.Save(); // Memastikan data tersimpan
+            Debug.Log("Progress disimpan! Level berikutnya yang terbuka: " + nextLevel);
+        }
     }
 
     public void RestartGame()
@@ -24,10 +44,10 @@ public class Victory : MonoBehaviour
     }
 
     public void Home()
-    {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene("MainMenu"); // Ganti dengan nama scene menu kamu
-    }
+{
+    Time.timeScale = 1f;
+    SceneManager.LoadScene("Home"); 
+}
 
     public void NextLevel(string sceneName)
     {
