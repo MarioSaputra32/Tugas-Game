@@ -65,25 +65,29 @@ public class PlayerInput : MonoBehaviour
         // ==========================================
         // 2. LOGIKA INPUT SERANG + DETEKSI HITBOX
         // ==========================================
-        if ((Input.GetMouseButtonDown(0) || MobileInput.Attack) && Time.time >= nextAttackTime)
-    {
-            MobileInput.Attack = false;
-
+        // ==========================================
+        // 2. LOGIKA INPUT SERANG + DETEKSI HITBOX (HANYA MOBILE BUTTON)
+        // ==========================================
+        // Menghapus Input.GetMouseButtonDown(0) agar klik mouse di luar tombol tidak memicu serangan
+        if (MobileInput.GetAttackPressed() && Time.time >= nextAttackTime)
+        {
             darkKnightController.ActivateAttack();
             nextAttackTime = Time.time + attackCooldown;
 
             CheckAttackHitbox();
-    }
+        }
 
         // ==========================================
         // 3. LOGIKA INPUT LONCAT
         // ==========================================
-      if ((Input.GetKeyDown(KeyCode.Space) || MobileInput.Jump) && isGrounded)
-    {
-        MobileInput.Jump = false;
-
-        rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
-    }
+      // ==========================================
+        // 3. LOGIKA INPUT LONCAT (DIPERBAIKI)
+        // ==========================================
+        if ((Input.GetKeyDown(KeyCode.Space) || MobileInput.Jump) && isGrounded)
+        {
+            MobileInput.Jump = false; // <--- HAPUS BARIS INI
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+        }
 
         // ==========================================
         // 4. LOGIKA INPUT GERAKAN & PENGUNCIAN DASH

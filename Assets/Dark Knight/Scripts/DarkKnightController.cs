@@ -196,19 +196,28 @@ namespace TealFalconEnemySeries{
         }
 
         // Fungsi membaca input (Bisa diganti dengan AI script jika ini untuk musuh)
+        // Fungsi membaca input (Mendukung PC/Keyboard & Mobile UI)
         private void HandleInput()
         {
-            // Jangan terima input jika sedang menyerang atau terluka
+            // Ambil data input sekali tekan di awal
+            bool mobileJump = MobileInput.GetJumpPressed();
+            bool mobileAttack = MobileInput.GetAttackPressed();
+
+            // PENTING: Jangan terima input gerak jika sedang menyerang atau terluka
             if (CurrentFightingState == FightingState.Attacking || CurrentFightingState == FightingState.Hurt) return;
 
-            // 1. Gerak Maju / Mundur (Menggunakan Arrow Keys atau WASD)
+            // 1. Gerak Maju / Mundur
             float moveInput = Input.GetAxisRaw("Horizontal"); 
+            
+            if (moveInput == 0)
+            {
+                moveInput = MobileInput.Horizontal;
+            }
 
             if (moveInput != 0)
             {
                 CurrentMovementState = Input.GetKey(KeyCode.LeftShift) ? MovementState.Running : MovementState.Walking;
                 
-                // Menentukan apakah bergerak maju atau mundur berdasarkan arah hadap
                 if (moveInput > 0 && !movingRight) Flip();
                 else if (moveInput < 0 && movingRight) Flip();
             }
@@ -217,23 +226,48 @@ namespace TealFalconEnemySeries{
                 CurrentMovementState = MovementState.Idle;
             }
 
-            // 2. Loncat (Tombol Space)
-            if (Input.GetButtonDown("Jump") && isGrounded)
+            // 2. Loncat
+            if ((Input.GetButtonDown("Jump") || mobileJump) && isGrounded)
             {
                 Jump();
             }
 
-            // 3. Serang (Klik Kiri Mouse)
-            if (Input.GetMouseButtonDown(0))
+            // 3. Serang Normal (DIPERBAIKI AGAR 100% ANTI-BOCOR DI MOBILE)
+            // 3. Serang Normal (DIPERBAIKI LENGKAP)
+            bool isOverUI = false;
+
+            if (UnityEngine.EventSystems.EventSystem.current != null)
+            {
+                // Cek apakah mouse sedang di atas UI (Untuk PC/Editor)
+                if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+                {
+                    isOverUI = true;
+                }
+                
+                // Cek apakah ada jari yang sedang menyentuh UI (Untuk HP)
+                if (Input.touchCount > 0)
+                {
+                    foreach (Touch touch in Input.touches)
+                    {
+                        if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId))
+                        {
+                            isOverUI = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // PENTING: Jika tombol mobile horizontal TIDAK 0 (sedang ditekan), KUNCI pcAttack agar tidak bisa menyerang!
+            bool isMovingMobile = MobileInput.Horizontal != 0f;
+
+            // Karakter hanya boleh attack lewat klik mouse JIKA tidak di atas UI DAN tidak sedang menekan tombol jalan mobile
+            bool pcAttack = Input.GetMouseButtonDown(0) && !isOverUI && !isMovingMobile;
+
+            if (mobileAttack)
             {
                 ActivateAttack();
             }
-            
-            // // 4. Serang Jarak Jauh / Beam (Klik Kanan Mouse)
-            // if (Input.GetMouseButtonDown(1))
-            // {
-            //     ActivateBeamAttack();
-            // }
         }
 
         // Fungsi Loncat (Jump)
