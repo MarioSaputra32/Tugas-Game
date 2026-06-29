@@ -1,97 +1,106 @@
 using UnityEngine;
-using UnityEngine.UI; // WAJIB ADA: Agar Unity mengenali tipe data 'Slider'
+using UnityEngine.UI;
 
 public class PlayerHealth : MonoBehaviour
 {
-    [Header("Pengaturan Darah")]
+    [Header("Health")]
     public float maxHealth = 100f;
     public float currentHealth;
 
-    [Header("Komponen UI Slider")]
-    // Kolom untuk memasukkan UI Slider di Inspector
-    public Slider healthSlider; 
+    [Header("UI")]
+    public Slider healthSlider;
+
+    private Defeat defeatManager;
+    private bool isDead = false;
 
     void Start()
     {
-        // Penuhi darah saat game baru dimulai
         currentHealth = maxHealth;
 
-        // Inisialisasi nilai batas maksimal slider sesuai dengan maxHealth
+        defeatManager = FindFirstObjectByType<Defeat>();
+
         if (healthSlider != null)
         {
             healthSlider.maxValue = maxHealth;
-            healthSlider.minValue = 0f;
+            healthSlider.minValue = 0;
+            healthSlider.value = currentHealth;
         }
 
-        UpdateHealthBar();
+        if (defeatManager == null)
+        {
+            Debug.LogError("DefeatManager tidak ditemukan!");
+        }
     }
 
     void Update()
     {
-        // =========================================================================
-        // TOMBOL TES DARURAT (Hapus atau beri komentar jika game sudah jadi)
-        // =========================================================================
-        // Tekan tombol K di Keyboard saat Play Mode untuk mengurangi darah sebesar 10
         if (Input.GetKeyDown(KeyCode.K))
         {
-            Debug.Log("Tombol K ditekan: Mengurangi darah sebesar 10");
-            TakeDamage(10f); 
+            TakeDamage(10);
         }
 
-        // Tekan tombol H di Keyboard saat Play Mode untuk menambah/heal darah sebesar 10
         if (Input.GetKeyDown(KeyCode.H))
         {
-            Debug.Log("Tombol H ditekan: Menambah darah sebesar 10");
-            Heal(10f);
+            Heal(10);
         }
     }
 
-    // Fungsi utama untuk mengurangi darah (dipanggil dari tombol tes atau script musuh)
-    public void TakeDamage(float damageAmount)
+    public void TakeDamage(float damage)
     {
-        currentHealth -= damageAmount;
-        currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth); // Cegah darah minus
+        if (isDead) return;
+
+        currentHealth -= damage;
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
 
         UpdateHealthBar();
 
-        if (currentHealth <= 0f)
+        if (currentHealth <= 0)
         {
             Die();
         }
     }
 
-    // Fungsi untuk menambah darah (misal saat ambil potion/item)
-    public void Heal(float healAmount)
+    public void Heal(float amount)
     {
-        currentHealth += healAmount;
-        currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
+        if (isDead) return;
+
+        currentHealth += amount;
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+
         UpdateHealthBar();
     }
 
-    // Fungsi untuk memperbarui visual isi Slider
     void UpdateHealthBar()
     {
         if (healthSlider != null)
         {
-            // Slider langsung diisi dengan nilai currentHealth
             healthSlider.value = currentHealth;
-        }
-        else
-        {
-            Debug.LogWarning("Health Slider belum di-drag ke Inspector PlayerHealth!");
         }
     }
 
     void Die()
     {
-        Debug.Log("Player telah mati!");
-        
-        // Memanggil fungsi mati bawaan DarkKnightController agar animasi kematian aktif
+        if (isDead) return;
+
+        isDead = true;
+
+        Debug.Log("PLAYER MATI");
+
         var controller = GetComponent<TealFalconEnemySeries.DarkKnightController>();
+
         if (controller != null)
         {
             controller.ActivateDeath();
         }
+
+        // Langsung tampilkan panel Defeat
+        if (defeatManager != null)
+        {
+            defeatManager.ShowDefeat();
+        }
+        else
+        {
+            Debug.LogError("DefeatManager NULL");
+        }
     }
-    
 }

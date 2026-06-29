@@ -26,16 +26,20 @@ public class BossAI : MonoBehaviour, IDamageable
     private bool isAgro = false;
     private bool isDead = false;
     private bool isAttacking = false;
+    private Victory victoryManager;
 
     void Start()
-    {
-        anim = GetComponent<Animator>();
-        rb = GetComponent<Rigidbody2D>();
+{
+    anim = GetComponent<Animator>();
+    rb = GetComponent<Rigidbody2D>();
 
-        currentHealth = maxHealth;
+    currentHealth = maxHealth;
 
-        FindPlayer();
-    }
+    FindPlayer();
+
+    // Cari Victory Manager di Scene
+    victoryManager = FindFirstObjectByType<Victory>();
+}
 
     void Update()
     {
@@ -160,20 +164,32 @@ public class BossAI : MonoBehaviour, IDamageable
     }
 
     void Die()
+{
+    if (isDead) return;
+
+    isDead = true;
+    isAgro = false;
+
+    rb.linearVelocity = Vector2.zero;
+    rb.simulated = false;
+
+    anim.SetTrigger("DeathTrigger");
+
+    StartCoroutine(DeathRoutine());
+}
+IEnumerator DeathRoutine()
+{
+    // Tunggu animasi mati selesai
+    yield return new WaitForSeconds(2f);
+
+    // Tampilkan Victory Panel
+    if (victoryManager != null)
     {
-        if (isDead) return;
-
-        isDead = true;
-        isAgro = false;
-
-        rb.linearVelocity = Vector2.zero;
-        rb.simulated = false;
-
-        anim.SetTrigger("DeathTrigger");
-
-        Destroy(gameObject, 2f);
+        victoryManager.ShowVictory();
     }
 
+    Destroy(gameObject);
+}
     void FacePlayer()
     {
         if (player == null) return;
